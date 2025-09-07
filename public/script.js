@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize the auth state observer immediately
+    initAuthStateObserver();
+
     const app = document.getElementById('app');
 
     const routes = {
@@ -14,9 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const navigate = (path) => {
-        window.history.pushState({}, path, window.location.origin + path);
+        // Only push state if the path is different
+        if (window.location.pathname !== path) {
+            window.history.pushState({}, path, window.location.origin + path);
+        }
         loadPage(path);
     };
+    // Make navigate global so the auth observer can use it
+    window.navigate = navigate;
 
     const loadPage = async (path) => {
         const route = routes[path] || routes['/404'];
@@ -26,31 +34,79 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add event listeners for the newly loaded page
         if (path === '/') {
-            const loginForm = document.getElementById('login-form');
-            if(loginForm) {
-                loginForm.addEventListener('submit', (e) => {
+            const authForm = document.getElementById('auth-form');
+            const toggleLink = document.getElementById('toggle-auth-mode');
+            let isLoginMode = true;
+
+            toggleLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                isLoginMode = !isLoginMode;
+                const title = document.getElementById('form-title');
+                const nameInput = document.getElementById('auth-name');
+                const confirmPasswordInput = document.getElementById('auth-confirm-password');
+                const button = document.getElementById('auth-button');
+
+                if (isLoginMode) {
+                    title.innerText = 'Login';
+                    nameInput.style.display = 'none';
+                    confirmPasswordInput.style.display = 'none';
+                    button.innerText = 'Login';
+                    toggleLink.innerText = "Don't have an account? Sign Up";
+                } else {
+                    title.innerText = 'Sign Up';
+                    nameInput.style.display = 'block';
+                    confirmPasswordInput.style.display = 'block';
+                    button.innerText = 'Sign Up';
+                    toggleLink.innerText = 'Already have an account? Login';
+                }
+            });
+
+            if(authForm) {
+                authForm.addEventListener('submit', (e) => {
                     e.preventDefault();
-                    navigate('/dashboard');
+                    const email = document.getElementById('auth-email').value;
+                    const password = document.getElementById('auth-password').value;
+
+                    if (isLoginMode) {
+                        signInUser(email, password);
+                    } else {
+                        const confirmPassword = document.getElementById('auth-confirm-password').value;
+                        if (password !== confirmPassword) {
+                            alert("Passwords do not match.");
+                            return;
+                        }
+                        signUpUser(email, password);
+                    }
                 });
             }
 
             const disclaimer = document.getElementById('disclaimer');
             const closeDisclaimer = document.getElementById('close-disclaimer');
             if(disclaimer && closeDisclaimer) {
-                // Show disclaimer after a short delay
-                setTimeout(() => {
-                    disclaimer.style.display = 'flex';
-                }, 500);
-
-                closeDisclaimer.addEventListener('click', () => {
-                    disclaimer.style.display = 'none';
-                });
+                setTimeout(() => { disclaimer.style.display = 'flex'; }, 500);
+                closeDisclaimer.addEventListener('click', () => { disclaimer.style.display = 'none'; });
             }
         } else if (path === '/dashboard') {
             document.getElementById('notes-card').addEventListener('click', () => navigate('/notes'));
             document.getElementById('cgpa-card').addEventListener('click', () => navigate('/cgpa'));
             document.getElementById('pings-card').addEventListener('click', () => navigate('/pings'));
             document.getElementById('community-card').addEventListener('click', () => navigate('/community'));
+            // Add logout functionality
+            const logoutNavButton = document.getElementById('logout-button-nav');
+            if (logoutNavButton) {
+                logoutNavButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
+            }
+        } else if (path === '/profile') {
+             const logoutProfileButton = document.getElementById('logout-button-profile');
+             if (logoutProfileButton) {
+                logoutProfileButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    logoutUser();
+                });
+            }
         } else if (path === '/cgpa') {
             const calculateButton = document.getElementById('calculate-gpa');
             if(calculateButton) {
@@ -63,8 +119,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadPage(window.location.pathname);
     };
 
-    // Initial page load
-    loadPage(window.location.pathname);
+    // Initial page load is handled by the auth state observer
+    // loadPage(window.location.pathname);
 });
 
 function calculateCGPA() {
