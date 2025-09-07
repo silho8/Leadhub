@@ -1,19 +1,17 @@
 // This file will contain all the Firebase Authentication logic.
-
-// The global `auth` object and `authFunctions` are initialized in index.html
-const auth = window.auth;
-const {
+console.log("[DEBUG] auth.js: Module loaded.");
+import { auth } from './firebase-config.js';
+import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged
-} = window.authFunctions;
-
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // --- AUTH FUNCTIONS ---
 
 // Function to handle user sign-up
-function signUpUser(email, password) {
+export function signUpUser(email, password) {
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed up
@@ -30,7 +28,7 @@ function signUpUser(email, password) {
 }
 
 // Function to handle user sign-in
-function signInUser(email, password) {
+export function signInUser(email, password) {
     signInWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
             // Signed in
@@ -47,7 +45,7 @@ function signInUser(email, password) {
 }
 
 // Function to handle user sign-out
-function logoutUser() {
+export function logoutUser() {
     signOut(auth).then(() => {
         console.log('User signed out');
         // The onAuthStateChanged observer will handle the redirect.
@@ -61,20 +59,23 @@ function logoutUser() {
 
 // Listener for authentication state changes
 // This will handle redirects and manage the user session.
-function initAuthStateObserver() {
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            // User is signed in.
-            console.log('Auth state changed: User is signed in', user);
-            // If user is on the login page, redirect to dashboard.
-            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-                navigate('/dashboard');
+export function initAuthStateObserver(navigateCallback, headerUpdateCallback) {
+    try {
+        onAuthStateChanged(auth, (user) => {
+            // Update the header display based on the user object (or null)
+            headerUpdateCallback(user);
+
+            if (user) {
+                // User is signed in.
+                if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                    navigateCallback('/dashboard');
+                }
+            } else {
+                // User is signed out.
+                navigateCallback('/');
             }
-        } else {
-            // User is signed out.
-            console.log('Auth state changed: User is signed out');
-            // Redirect to login page.
-            navigate('/');
-        }
-    });
+        });
+    } catch (error) {
+        console.error("[FATAL DEBUG] auth.js: Error in initAuthStateObserver.", error);
+    }
 }

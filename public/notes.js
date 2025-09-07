@@ -1,26 +1,20 @@
 // This file will contain all the Cloud Firestore logic for the Notes feature.
-
-// The global `db` object and `dbFunctions` are initialized in index.html
-const db = window.db;
-const {
+import { db, auth } from './firebase-config.js';
+import {
     collection,
     addDoc,
     onSnapshot,
     query,
-    where,
     doc,
     deleteDoc,
     updateDoc
-} = window.dbFunctions;
-
-// The global `auth` object is also available
-const auth = window.auth;
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
 // --- NOTES CRUD FUNCTIONS ---
 
 // Function to add a new note
-async function addNote(title, content) {
+export async function addNote(title, content) {
     const userId = auth.currentUser ? auth.currentUser.uid : null;
     if (!userId) {
         return console.error("No user logged in to add a note.");
@@ -39,7 +33,7 @@ async function addNote(title, content) {
 }
 
 // Function to get all notes for the current user and listen for real-time updates
-function getNotes(callback) {
+export function getNotes(callback) {
     const userId = auth.currentUser ? auth.currentUser.uid : null;
     if (!userId) {
         return console.error("No user logged in to get notes.");
@@ -63,7 +57,7 @@ function getNotes(callback) {
 }
 
 // Function to update an existing note
-async function updateNote(noteId, updatedData) {
+export async function updateNote(noteId, updatedData) {
     const userId = auth.currentUser ? auth.currentUser.uid : null;
     if (!userId) {
         return console.error("No user logged in to update a note.");
@@ -79,7 +73,7 @@ async function updateNote(noteId, updatedData) {
 }
 
 // Function to delete a note
-async function deleteNote(noteId) {
+export async function deleteNote(noteId) {
     const userId = auth.currentUser ? auth.currentUser.uid : null;
     if (!userId) {
         return console.error("No user logged in to delete a note.");
