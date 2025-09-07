@@ -32,6 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const html = await response.text();
         app.innerHTML = html;
 
+        // Re-trigger fade-in animation
+        app.classList.remove('fade-in');
+        void app.offsetWidth; // Trigger a reflow, flushing the CSS changes
+        app.classList.add('fade-in');
+
         // Add event listeners for the newly loaded page
         if (path === '/') {
             const authForm = document.getElementById('auth-form');

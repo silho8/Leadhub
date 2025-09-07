@@ -11,12 +11,32 @@
 }
 
 body {
-    background-color: var(--primary-color);
     color: var(--text-color);
     font-family: var(--font-body);
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    background: linear-gradient(
+        -45deg,
+        #0d0d2b, /* Primary Dark Blue */
+        #1a0a2e, /* Dark Purple */
+        #0a2e1e, /* Dark Green */
+        #2e0a0a  /* Dark Pink/Red */
+    );
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 #app {
@@ -27,6 +47,21 @@ body {
     min-height: 100vh;
     padding: 20px;
     box-sizing: border-box;
+}
+
+.fade-in {
+    animation: fadeInAnimation ease 0.5s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+@keyframes fadeInAnimation {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+     }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -50,7 +85,8 @@ h1, h2, h3, h4, h5, h6 {
 .glowing-button:hover {
     background: var(--accent-green);
     color: var(--primary-color);
-    box-shadow: 0 0 20px var(--accent-green);
+    box-shadow: 0 0 25px var(--accent-green), 0 0 35px var(--accent-green);
+    transform: scale(1.05);
 }
 
 .glowing-input {
@@ -61,11 +97,20 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 5px;
     box-shadow: 0 0 5px var(--accent-purple);
     font-family: var(--font-body);
+    transition: all 0.3s ease;
+}
+
+.glowing-input:focus {
+    outline: none;
+    box-shadow: 0 0 15px var(--accent-purple);
+    border-color: var(--accent-pink);
 }
 
 .glowing-card {
-    background: var(--secondary-color);
-    border: 1px solid var(--accent-blue);
+    background: rgba(13, 13, 43, 0.5); /* Semi-transparent dark blue */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    border: 1px solid rgba(0, 242, 255, 0.3); /* Transparent accent blue */
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 0 15px var(--accent-blue);
@@ -75,6 +120,7 @@ h1, h2, h3, h4, h5, h6 {
 .glowing-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 0 25px var(--accent-blue);
+    background: rgba(13, 13, 43, 0.7);
 }
 
 /* Login Page Styles */
@@ -113,10 +159,12 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 1000;
 }
 .disclaimer-content {
-    background: var(--secondary-color);
+    background: rgba(26, 26, 58, 0.6); /* Semi-transparent secondary color */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 2rem;
     border-radius: 10px;
-    border: 1px solid var(--accent-purple);
+    border: 1px solid rgba(160, 32, 240, 0.4); /* Transparent accent purple */
     box-shadow: 0 0 20px var(--accent-purple);
     text-align: center;
     max-width: 500px;
@@ -142,10 +190,15 @@ h1, h2, h3, h4, h5, h6 {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: var(--secondary-color);
-    border-bottom: 1px solid var(--accent-blue);
+    background: rgba(13, 13, 43, 0.5); /* Semi-transparent dark blue */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    border-bottom: 1px solid rgba(0, 242, 255, 0.3); /* Transparent accent blue */
     box-shadow: 0 0 15px var(--accent-blue);
     margin-bottom: 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 .nav-logo {
     font-family: var(--font-title);
@@ -436,4 +489,19 @@ h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-title);
     color: var(--accent-pink);
     text-shadow: 0 0 20px var(--accent-pink);
+}
+
+/* Logo Styles */
+.site-logo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 3px solid var(--accent-blue);
+    box-shadow: 0 0 20px var(--accent-blue), 0 0 30px var(--accent-purple);
+    margin-bottom: 1.5rem;
+}
+
+.site-logo-nav {
+    height: 40px;
+    width: 40px;
 }
