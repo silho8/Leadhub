@@ -1,0 +1,21 @@
+{
+  "name": "LeadHub",
+  "short_name": "LeadHub",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0d0d2b",
+  "theme_color": "#0d0d2b",
+  "description": "A futuristic student companion tool for Lead City University students.",
+  "icons": [
+    {
+      "src": "assets/logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
