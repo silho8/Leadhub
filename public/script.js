@@ -167,7 +167,45 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
         } else if (path === '/cgpa') {
+            const tableBody = document.getElementById('cgpa-table-body');
+            const addCourseBtn = document.getElementById('add-course-btn');
             const calculateButton = document.getElementById('calculate-gpa');
+
+            const createCourseRow = () => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><input type="text" placeholder="e.g., CSC401" class="glowing-input"></td>
+                    <td><input type="number" min="1" max="6" value="3" class="glowing-input"></td>
+                    <td>
+                        <select class="glowing-input">
+                            <option value="5">A</option>
+                            <option value="4">B</option>
+                            <option value="3">C</option>
+                            <option value="2">D</option>
+                            <option value="1">E</option>
+                            <option value="0">F</option>
+                        </select>
+                    </td>
+                    <td><button class="glowing-button remove-course-btn">Remove</button></td>
+                `;
+                tableBody.appendChild(row);
+            };
+
+            // Create default 9 rows
+            for (let i = 0; i < 9; i++) {
+                createCourseRow();
+            }
+
+            // Event listener for adding a new course
+            addCourseBtn.addEventListener('click', createCourseRow);
+
+            // Event listener for removing a course (using event delegation)
+            tableBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-course-btn')) {
+                    e.target.closest('tr').remove();
+                }
+            });
+
             if(calculateButton) {
                 calculateButton.addEventListener('click', calculateCGPA);
             }
@@ -183,7 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function calculateCGPA() {
-    const rows = document.querySelectorAll('.input-table tbody tr');
+    // Select all rows within the dynamic table body
+    const rows = document.querySelectorAll('#cgpa-table-body tr');
     let totalGradePoints = 0;
     let totalUnits = 0;
 
@@ -191,12 +230,15 @@ function calculateCGPA() {
         const unitsInput = row.querySelector('input[type="number"]');
         const gradeSelect = row.querySelector('select');
 
-        const units = parseFloat(unitsInput.value) || 0;
-        const grade = parseFloat(gradeSelect.value) || 0;
+        // Ensure the elements exist before trying to get their value
+        if (unitsInput && gradeSelect) {
+            const units = parseFloat(unitsInput.value) || 0;
+            const grade = parseFloat(gradeSelect.value) || 0;
 
-        if (units > 0) {
-            totalGradePoints += units * grade;
-            totalUnits += units;
+            if (units > 0) {
+                totalGradePoints += units * grade;
+                totalUnits += units;
+            }
         }
     });
 

@@ -9,42 +9,18 @@
                             <th>Course Code</th>
                             <th>Course Units</th>
                             <th>Grade</th>
+                            <th></th> <!-- Header for remove button -->
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Rows will be added dynamically or pre-filled -->
-                        <tr>
-                            <td><input type="text" placeholder="e.g., CSC401"></td>
-                            <td><input type="number" min="1" max="6" value="3"></td>
-                            <td>
-                                <select class="glowing-input">
-                                    <option value="5">A</option>
-                                    <option value="4">B</option>
-                                    <option value="3">C</option>
-                                    <option value="2">D</option>
-                                    <option value="1">E</option>
-                                    <option value="0">F</option>
-                                </select>
-                            </td>
-                        </tr>
-                         <tr>
-                            <td><input type="text" placeholder="e.g., MTH302"></td>
-                            <td><input type="number" min="1" max="6" value="3"></td>
-                            <td>
-                                <select class="glowing-input">
-                                    <option value="5">A</option>
-                                    <option value="4">B</option>
-                                    <option value="3">C</option>
-                                    <option value="2">D</option>
-                                    <option value="1">E</option>
-                                    <option value="0">F</option>
-                                </select>
-                            </td>
-                        </tr>
+                    <tbody id="cgpa-table-body">
+                        <!-- Course rows will be dynamically inserted here -->
                     </tbody>
                 </table>
             </div>
-            <button id="calculate-gpa" class="glowing-button" style="margin-top: 1rem;">Calculate GPA</button>
+            <div class="cgpa-buttons" style="margin-top: 1rem; display: flex; gap: 1rem;">
+                <button id="calculate-gpa" class="glowing-button">Calculate GPA</button>
+                <button id="add-course-btn" class="glowing-button">Add Course</button>
+            </div>
         </div>
         <div class="glowing-card grading-rubric">
             <h3>Grading Rubric</h3>
