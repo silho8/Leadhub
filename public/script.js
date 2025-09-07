@@ -107,6 +107,60 @@ document.addEventListener('DOMContentLoaded', () => {
                     logoutUser();
                 });
             }
+        } else if (path === '/notes') {
+            const noteGrid = document.querySelector('.note-grid');
+            const uploadButton = document.querySelector('.notes-header .glowing-button');
+
+            const renderNotes = (notes) => {
+                if (!noteGrid) return;
+                if (notes.length === 0) {
+                    noteGrid.innerHTML = '<p>No notes yet. Create one!</p>';
+                    return;
+                }
+                noteGrid.innerHTML = notes.map(note => `
+                    <div class="glowing-card note-card" data-id="${note.id}">
+                        <h4>${note.title}</h4>
+                        <p>${note.content}</p>
+                        <p class="note-meta">Created: ${new Date(note.createdAt.seconds * 1000).toLocaleDateString()}</p>
+                        <button class="share-button edit-note">Edit</button>
+                        <button class="share-button delete-note" style="right: 70px;">Delete</button>
+                    </div>
+                `).join('');
+
+                // Add event listeners for new buttons
+                document.querySelectorAll('.edit-note').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const noteId = e.target.closest('.note-card').dataset.id;
+                        const newTitle = prompt("Enter new title:", e.target.closest('.note-card').querySelector('h4').innerText);
+                        const newContent = prompt("Enter new content:", e.target.closest('.note-card').querySelector('p').innerText);
+                        if (newTitle !== null && newContent !== null) {
+                            updateNote(noteId, { title: newTitle, content: newContent });
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.delete-note').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const noteId = e.target.closest('.note-card').dataset.id;
+                        if (confirm("Are you sure you want to delete this note?")) {
+                            deleteNote(noteId);
+                        }
+                    });
+                });
+            };
+
+            getNotes(renderNotes);
+
+            uploadButton.addEventListener('click', () => {
+                const title = prompt("Enter note title:");
+                if (title) {
+                    const content = prompt("Enter note content:");
+                    if (content) {
+                        addNote(title, content);
+                    }
+                }
+            });
+
         } else if (path === '/cgpa') {
             const calculateButton = document.getElementById('calculate-gpa');
             if(calculateButton) {
