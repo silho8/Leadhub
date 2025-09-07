@@ -12,7 +12,8 @@ const urlsToCache = [
   '/pages/pings.html',
   '/pages/ai.html',
   '/pages/community.html',
-  '/pages/profile.html'
+  '/pages/profile.html',
+  '/pages/404.html'
 ];
 
 self.addEventListener('install', event => {
