@@ -1,45 +1,14 @@
-<div id="notes-page">
-    <div class="notes-header">
-        <h2>My Notes</h2>
-        <div class="search-bar">
-            <input type="text" class="app-input" placeholder="Search notes...">
-            <button class="primary-button">Search</button>
-        </div>
-        <div>
-            <label for="note-file-upload" class="primary-button">Upload Note</label>
-            <input type="file" id="note-file-upload" accept="image/*,.pdf" style="display: none;">
-        </div>
-    </div>
+<div class="ui-card add-note-card">
+    <h3>Add a New Note</h3>
+    <form id="add-note-form" class="app-form">
+        <input type="text" id="note-title" name="title" class="app-input" placeholder="Note Title" required>
+        <textarea id="note-content" name="content" class="app-input" placeholder="What's on your mind?" rows="4" required></textarea>
+        <button type="submit" class="primary-button">Save Note</button>
+    </form>
+</div>
 
-    <h3>Course Folders</h3>
-    <div class="folder-grid">
-        <div class="folder">
-            <span class="folder-icon">📁</span>
-            <span>CSC 401</span>
-        </div>
-        <div class="folder">
-            <span class="folder-icon">📁</span>
-            <span>MTH 302</span>
-        </div>
-        <div class="folder">
-            <span class="folder-icon">📁</span>
-            <span>GST 101</span>
-        </div>
-    </div>
-
-    <h3>All Notes</h3>
-    <div class="note-grid">
-        <div class="ui-card note-card">
-            <img src="https://via.placeholder.com/300x200" alt="Note thumbnail">
-            <h4>Lecture Note 1 - CSC 401</h4>
-            <p>Tags: #AI, #Search_Algorithms</p>
-            <button class="share-button">Share</button>
-        </div>
-        <div class="ui-card note-card">
-            <img src="https://via.placeholder.com/300x200" alt="Note thumbnail">
-            <h4>Handout - MTH 302</h4>
-            <p>Tags: #Calculus, #Integration</p>
-            <button class="share-button">Share</button>
-        </div>
-    </div>
+<h3>All Notes</h3>
+<div class="note-grid">
+    <!-- Notes will be dynamically loaded here -->
+    <p>Loading your notes...</p>
 </div>
