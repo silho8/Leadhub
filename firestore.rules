@@ -1,10 +1,32 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own notes.
-    // The collection of notes for a user is stored under /notes/{userId}
-    match /notes/{userId}/{noteId} {
+    // The collection of notes for a user is stored under /notes/{userId}/userNotes
+    match /notes/{userId}/userNotes/{noteId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for the users collection
+    match /users/{userId} {
+      // Any authenticated user can read any profile
+      allow read: if request.auth != null;
+      // A user can only create, update, or delete their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      // Allow a user to manage their own courses subcollection
+      match /courses/{courseId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Rules for the posts collection
+    match /posts/{postId} {
+      // Any authenticated user can read any post
+      allow read: if request.auth != null;
+      // Any authenticated user can create a post
+      allow create: if request.auth != null;
+      // A user can only update or delete their own posts
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.authorId;
     }
   }
 }

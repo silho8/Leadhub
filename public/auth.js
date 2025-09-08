@@ -1,22 +1,38 @@
 // This file will contain all the Firebase Authentication logic.
-console.log("[DEBUG] auth.js: Module loaded.");
 import { auth } from './firebase-config.js';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    updateProfile,
+    getIdToken
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { db } from './firebase-config.js';
+import { setSupabaseAuth } from './supabase-config.js';
 
 // --- AUTH FUNCTIONS ---
 
 // Function to handle user sign-up
-export function signUpUser(email, password) {
+export function signUpUser(name, email, password) {
     createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
-            // Signed up
             const user = userCredential.user;
-            console.log('User signed up:', user);
+            // After creating the user, update their profile with the name
+            return updateProfile(user, { displayName: name }).then(() => {
+                // Now, create a document for them in the 'users' collection
+                const userDocRef = doc(db, "users", user.uid);
+                return setDoc(userDocRef, {
+                    uid: user.uid,
+                    name: name,
+                    email: email,
+                    createdAt: new Date()
+                });
+            });
+        })
+        .then(() => {
+            console.log('User signed up and profile created.');
             // The onAuthStateChanged observer will handle the redirect.
         })
         .catch((error) => {
@@ -60,22 +76,29 @@ export function logoutUser() {
 // Listener for authentication state changes
 // This will handle redirects and manage the user session.
 export function initAuthStateObserver(navigateCallback, headerUpdateCallback) {
-    try {
-        onAuthStateChanged(auth, (user) => {
-            // Update the header display based on the user object (or null)
-            headerUpdateCallback(user);
+    onAuthStateChanged(auth, (user) => {
+        headerUpdateCallback(user);
 
-            if (user) {
-                // User is signed in.
-                if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-                    navigateCallback('/dashboard');
-                }
-            } else {
-                // User is signed out.
-                navigateCallback('/');
+        if (user) {
+            // User is signed in.
+            // Get the Firebase JWT and set it for Supabase.
+            user.getIdToken().then((token) => {
+                setSupabaseAuth(token);
+            });
+
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                navigateCallback('/dashboard');
             }
-        });
-    } catch (error) {
-        console.error("[FATAL DEBUG] auth.js: Error in initAuthStateObserver.", error);
-    }
+        } else {
+            // User is signed out.
+            // Clear the Supabase session.
+            setSupabaseAuth(null);
+            navigateCallback('/');
+        }
+    }, (error) => {
+        console.error("Error in onAuthStateChanged observer:", error);
+        headerUpdateCallback(null);
+        setSupabaseAuth(null); // Clear session on error too
+        navigateCallback('/');
+    });
 }

@@ -2,10 +2,12 @@
     <h2>My Profile</h2>
     <div class="profile-container">
         <div class="ui-card user-info">
-            <h3>User Info</h3>
-            <p><strong>Name:</strong> Alex Doe</p>
-            <p><strong>Email:</strong> alex.doe@student.lcu.edu.ng</p>
-            <p><strong>Notes Uploaded:</strong> 12</p>
+            <img src="https://via.placeholder.com/150" alt="Profile Picture" id="profile-pic" class="profile-picture">
+            <label for="profile-pic-upload" class="primary-button upload-button">Change Picture</label>
+            <input type="file" id="profile-pic-upload" accept="image/*" style="display: none;">
+
+            <h3 id="profile-name">Loading...</h3>
+            <p id="profile-email">Loading...</p>
         </div>
         <div class="ui-card user-settings">
             <h3>Settings</h3>
