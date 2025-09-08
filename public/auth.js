@@ -1,104 +1,58 @@
-// This file will contain all the Firebase Authentication logic.
-import { auth } from './firebase-config.js';
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged,
-    updateProfile,
-    getIdToken
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { db } from './firebase-config.js';
-import { setSupabaseAuth } from './supabase-config.js';
+import { supabase } from './supabase-config.js';
 
 // --- AUTH FUNCTIONS ---
 
-// Function to handle user sign-up
-export function signUpUser(name, email, password) {
-    createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            // After creating the user, update their profile with the name
-            return updateProfile(user, { displayName: name }).then(() => {
-                // Now, create a document for them in the 'users' collection
-                const userDocRef = doc(db, "users", user.uid);
-                return setDoc(userDocRef, {
-                    uid: user.uid,
-                    name: name,
-                    email: email,
-                    createdAt: new Date()
-                });
-            });
-        })
-        .then(() => {
-            console.log('User signed up and profile created.');
-            // The onAuthStateChanged observer will handle the redirect.
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.error('Sign up error:', errorCode, errorMessage);
-            alert(`Sign-up failed: ${errorMessage}`);
-        });
-}
+/**
 
-// Function to handle user sign-in
-export function signInUser(email, password) {
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            // Signed in
-            const user = userCredential.user;
-            console.log('User signed in:', user);
-            // The onAuthStateChanged observer will handle the redirect.
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.error('Sign in error:', errorCode, errorMessage);
-            alert(`Sign-in failed: ${errorMessage}`);
-        });
-}
+Signs up a new user and creates a corresponding profile.
 
-// Function to handle user sign-out
-export function logoutUser() {
-    signOut(auth).then(() => {
-        console.log('User signed out');
-        // The onAuthStateChanged observer will handle the redirect.
-    }).catch((error) => {
-        console.error('Sign out error:', error);
-        alert(`Sign-out failed: ${error.message}`);
-    });
-}
+Note: Supabase sends a confirmation email. The user must click the link in the email
 
-// --- AUTH STATE OBSERVER ---
+to be fully registered.
 
-// Listener for authentication state changes
-// This will handle redirects and manage the user session.
-export function initAuthStateObserver(navigateCallback, headerUpdateCallback) {
-    onAuthStateChanged(auth, (user) => {
-        headerUpdateCallback(user);
+@param {string} name - The user's full name.
 
-        if (user) {
-            // User is signed in.
-            // Get the Firebase JWT and set it for Supabase.
-            user.getIdToken().then((token) => {
-                setSupabaseAuth(token);
-            });
+@param {string} email - The user's email address.
 
-            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-                navigateCallback('/dashboard');
-            }
-        } else {
-            // User is signed out.
-            // Clear the Supabase session.
-            setSupabaseAuth(null);
-            navigateCallback('/');
-        }
-    }, (error) => {
-        console.error("Error in onAuthStateChanged observer:", error);
-        headerUpdateCallback(null);
-        setSupabaseAuth(null); // Clear session on error too
-        navigateCallback('/');
-    });
-}
+@param {string} password - The user's chosen password. */ export async function signUpUser(name, email, password) { try { const { data, error } = await supabase.auth.signUp({ email: email, password: password, options: { data: { full_name: name } } });
+
+ if (error) throw error;
+
+ alert('Sign-up successful! Please check your email to confirm your account.');
+ return data.user;
+} catch (error) { console.error('Sign up error:', error.message); alert(Sign-up failed: ${error.message}); } }
+
+/**
+
+Signs in an existing user.
+
+@param {string} email - The user's email address.
+
+@param {string} password - The user's password. */ export async function signInUser(email, password) { try { const { data, error } = await supabase.auth.signInWithPassword({ email: email, password: password, });
+
+ if (error) throw error;
+ console.log('User signed in successfully.');
+ return data.user;
+} catch (error) { console.error('Sign in error:', error.message); alert(Sign-in failed: ${error.message}); } }
+
+/**
+
+Signs out the current user. */ export async function logoutUser() { try { const { error } = await supabase.auth.signOut(); if (error) throw error; console.log('User signed out successfully.'); } catch (error) { console.error('Sign out error:', error.message); alert(Sign-out failed: ${error.message}); } }
+/**
+
+Initializes a listener for authentication state changes (sign-in, sign-out).
+
+@param {function} navigateCallback - The function to call for routing/navigation.
+
+@param {function} headerUpdateCallback - The function to call to update the UI header. */ export function initAuthStateObserver(navigateCallback, headerUpdateCallback) { supabase.auth.onAuthStateChange((event, session) => { const user = session?.user || null; headerUpdateCallback(user);
+
+ if (user) {
+     if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+          navigateCallback('/dashboard');
+     } else {
+          navigateCallback(window.location.pathname);
+     }
+ } else {
+     navigateCallback('/');
+ }
+}); }
