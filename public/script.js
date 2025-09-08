@@ -1,196 +1,178 @@
-import { signUpUser, signInUser, logoutUser, initAuthStateObserver } from './auth.js';
-import {
-    addNote, getNotes, updateNote, deleteNote,
-    getUserProfile, updateUserProfile,
-    getCourses, saveCourses,
-    createPost, getPosts
-} from './firestore.js';
-import { uploadProfilePicture } from './storage.js';
-import { auth } from './firebase-config.js';
+import { signUpUser, signInUser, logoutUser, initAuthStateObserver } from './auth.js'; import { supabase } from './supabase-config.js'; import { getNotes, addNote, deleteNote } from './database.js'; import { uploadProfilePicture } from './storage.js';
 
 const app = document.getElementById('app');
 
-const routes = {
-    '/': 'pages/login.html',
-    '/dashboard': 'pages/dashboard.html',
-    '/notes': 'pages/notes.html',
-    '/cgpa': 'pages/cgpa.html',
-    '/pings': 'pages/pings.html',
-    '/ai': 'pages/ai.html',
-    '/community': 'pages/community.html',
-    '/profile': 'pages/profile.html',
-    '/404': 'pages/404.html'
-};
+const routes = { '/': 'pages/login.html', '/dashboard': 'pages/dashboard.html', '/notes': 'pages/notes.html', '/cgpa': 'pages/cgpa.html', '/pings': 'pages/pings.html', '/ai': 'pages/ai.html', '/community': 'pages/community.html', '/profile': 'pages/profile.html', '/share': 'pages/share.html', '/404': 'pages/404.html' };
 
-const navigate = (path) => {
-    window.history.pushState({}, path, window.location.origin + path);
-    loadPage(path);
-};
+const navigate = (path) => { if (window.location.pathname !== path) { window.history.pushState({}, path, window.location.origin + path); } loadPage(path); };
 
-const renderHeader = (user) => {
-    const header = document.getElementById('main-header');
-    const navLinksContainer = document.getElementById('main-nav-links');
-    if (!header || !navLinksContainer) return;
+const renderHeader = (user) => { const header = document.getElementById('main-header'); if (!header) return;
 
-    if (user) {
-        header.style.display = 'block';
-        navLinksContainer.innerHTML = `
-            <a href="#" id="dashboard-link">Dashboard</a>
-            <a href="#" id="profile-link">Profile</a>
-            <a href="#" id="logout-button-nav">Logout</a>
-        `;
-        document.getElementById('dashboard-link').addEventListener('click', (e) => { e.preventDefault(); navigate('/dashboard'); });
-        document.getElementById('profile-link').addEventListener('click', (e) => { e.preventDefault(); navigate('/profile'); });
-        document.getElementById('logout-button-nav').addEventListener('click', (e) => { e.preventDefault(); logoutUser(); });
-    } else {
-        header.style.display = 'none';
-        navLinksContainer.innerHTML = '';
-    }
-};
+const userName = user?.user_metadata?.full_name;
 
-const loadPage = async (path) => {
-    const route = routes[path] || routes['/404'];
-    try {
-        const response = await fetch(route);
-        if (!response.ok) {
-            app.innerHTML = `<h1>Error: Could not load page content.</h1>`;
-            return;
+if (user) {
+    header.innerHTML = `
+        <div class="logo">
+            <a href="#" data-path="/dashboard">LeadHub</a>
+        </div>
+        <nav>
+            <a href="#" data-path="/dashboard">Dashboard</a>
+            <a href="#" data-path="/notes">Notes</a>
+            <a href="#" data-path="/cgpa">CGPA</a>
+            <a href="#" data-path="/community">Community</a>
+            <a href="#" data-path="/pings">Pings</a>
+            <a href="#" data-path="/ai">AI Assistant</a>
+            <a href="#" data-path="/profile">Profile</a>
+            <a href="#" id="logout-btn">Logout</a>
+        </nav>
+        <div id="hamburger-menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `;
+    document.getElementById('logout-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        logoutUser();
+    });
+    document.getElementById('hamburger-menu').addEventListener('click', () => {
+        header.classList.toggle('nav-open');
+    });
+} else {
+    header.innerHTML = `
+        <div class="logo">
+            <a href="#">LeadHub</a>
+        </div>
+        <nav></nav>
+    `;
+}
+
+header.querySelectorAll('a[data-path]').forEach(link => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const path = link.getAttribute('data-path');
+        navigate(path);
+        if (header.classList.contains('nav-open')) {
+            header.classList.remove('nav-open');
         }
-        const html = await response.text();
-        app.innerHTML = html;
+    });
+});
+};
 
-        app.classList.remove('fade-in');
-        void app.offsetWidth;
-        app.classList.add('fade-in');
-    } catch (error) {
-        console.error(`Error in loadPage function for path ${path}.`, error);
-        app.innerHTML = `<h1>Fatal Error: Could not load page. Check console.</h1>`;
+const attachAuthEventListeners = () => { const loginForm = document.getElementById('login-form'); if (loginForm) { loginForm.addEventListener('submit', (e) => { e.preventDefault(); const email = e.target.email.value; const password = e.target.password.value; signInUser(email, password); }); }
+
+const signupForm = document.getElementById('signup-form');
+if (signupForm) {
+    signupForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = e.target.name.value;
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+        signUpUser(name, email, password);
+    });
+}
+
+const toggleToSignup = document.getElementById('toggle-to-signup');
+const toggleToLogin = document.getElementById('toggle-to-login');
+const loginContainer = document.querySelector('.login-container');
+const signupContainer = document.querySelector('.signup-container');
+
+if (toggleToSignup && toggleToLogin && loginContainer && signupContainer) {
+    toggleToSignup.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginContainer.style.display = 'none';
+        signupContainer.style.display = 'flex';
+    });
+    toggleToLogin.addEventListener('click', (e) => {
+        e.preventDefault();
+        signupContainer.style.display = 'none';
+        loginContainer.style.display = 'flex';
+    });
+}
+};
+
+const loadPage = async (path) => { const { data: { user: currentUser } } = await supabase.auth.getUser(); let route, params;
+
+if (path.startsWith('/share/')) {
+    params = path.split('/')[2];
+    route = routes['/share'];
+} else if (path.startsWith('/profile/')) {
+    params = path.split('/')[2];
+    route = routes['/profile'];
+} else {
+    route = routes[path] || routes['/404'];
+}
+
+try {
+    const response = await fetch(route);
+    if (!response.ok) {
+        app.innerHTML = `<h1>404 Not Found</h1><p>Could not load page content.</p>`;
+        return;
     }
+    const html = await response.text();
+    app.innerHTML = html;
+} catch (error) {
+    console.error(`Error loading page ${path}:`, error);
+    app.innerHTML = `<h1>Fatal Error</h1><p>Could not load page. Check console.</p>`;
+    return;
+}
 
-    if (path === '/') {
-        // Login/signup page logic...
-        const authForm = document.getElementById('auth-form');
-        const toggleLink = document.getElementById('toggle-auth-mode');
-        let isLoginMode = true;
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isLoginMode = !isLoginMode;
-            // ... (rest of the toggle logic)
-        });
-        if(authForm) {
-            authForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                // ... (rest of the form submission logic)
-            });
-        }
-    } else if (path === '/profile') {
-        // Profile page logic...
-    } else if (path === '/notes') {
-        // Notes page logic...
-    } else if (path === '/community') {
-        const postGrid = document.querySelector('.post-grid');
-        const createPostBtn = document.querySelector('.community-header .primary-button');
+if (path === '/') {
+    attachAuthEventListeners();
+} else if (path === '/notes') {
+    const notesGrid = document.querySelector('.note-grid');
+    const addNoteForm = document.getElementById('add-note-form');
 
-        const renderPosts = (posts) => {
-            if (!postGrid) return;
-            postGrid.innerHTML = posts.length === 0 ? '<p>No posts yet. Be the first!</p>' : posts.map(post => `
-                <div class="ui-card post-card" data-id="${post.id}">
-                    <h3>${post.title}</h3>
-                    <p>${post.content}</p>
-                    <p class="post-meta">Posted by <strong>${post.authorName || 'Anonymous'}</strong> on ${new Date(post.createdAt.seconds * 1000).toLocaleDateString()}</p>
+    const renderNotes = async () => {
+        if (!notesGrid) return;
+        const notes = await getNotes();
+        notesGrid.innerHTML = notes.length === 0 ? '<p>You have no notes yet. Create one!</p>' : notes.map(note => `
+            <div class="note-card" data-id="${note.id}">
+                <h3>${note.title}</h3>
+                <p>${note.content}</p>
+                <div class="note-actions">
+                    <button class="delete-btn">Delete</button>
                 </div>
-            `).join('');
-        };
+            </div>
+        `).join('');
 
-        getPosts(renderPosts);
-
-        if (createPostBtn) {
-            createPostBtn.addEventListener('click', () => {
-                const title = prompt("Enter post title:");
-                if (title) {
-                    const content = prompt("Enter post content:");
-                    if (content) {
-                        createPost(title, content);
+        notesGrid.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', async (e) => {
+                const noteCard = e.target.closest('.note-card');
+                const noteId = noteCard.dataset.id;
+                if (confirm('Are you sure you want to delete this note?')) {
+                    if (await deleteNote(noteId)) {
+                        noteCard.remove();
+                    } else {
+                        alert('Failed to delete note.');
                     }
                 }
             });
-        }
-    } else if (path === '/cgpa') {
-        const tableBody = document.getElementById('cgpa-table-body');
-        const addCourseBtn = document.getElementById('add-course-btn');
-        const calculateButton = document.getElementById('calculate-gpa');
-        const saveButton = document.getElementById('save-gpa-btn'); // Assuming a save button is added to HTML
-
-        const createCourseRow = (course = { code: '', units: 3, grade: 5 }) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td><input type="text" placeholder="e.g., CSC401" class="app-input" value="${course.code}"></td><td><input type="number" min="1" max="6" value="${course.units}" class="app-input"></td><td><select class="app-input" value="${course.grade}"><option value="5">A</option><option value="4">B</option><option value="3">C</option><option value="2">D</option><option value="1">E</option><option value="0">F</option></select></td><td><button class="primary-button remove-course-btn">Remove</button></td>`;
-            // Set the selected option
-            row.querySelector('select').value = course.grade;
-            tableBody.appendChild(row);
-        };
-
-        const renderCourses = (courses) => {
-            tableBody.innerHTML = '';
-            if (courses.length > 0) {
-                courses.forEach(course => createCourseRow(course));
-            } else {
-                // Create 9 default empty rows if no courses are saved
-                for (let i = 0; i < 9; i++) { createCourseRow(); }
-            }
-        };
-
-        getCourses(renderCourses); // Fetch and render courses on page load
-
-        addCourseBtn.addEventListener('click', () => createCourseRow());
-
-        tableBody.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-course-btn')) e.target.closest('tr').remove();
         });
+    };
 
-        if(calculateButton) calculateButton.addEventListener('click', calculateCGPA);
-
-        if(saveButton) {
-            saveButton.addEventListener('click', () => {
-                const rows = document.querySelectorAll('#cgpa-table-body tr');
-                const coursesToSave = [];
-                rows.forEach(row => {
-                    const code = row.querySelector('input[type="text"]').value;
-                    const units = parseFloat(row.querySelector('input[type="number"]').value);
-                    const grade = parseFloat(row.querySelector('select').value);
-                    if (code && units) { // Only save rows that have at least a code and units
-                        coursesToSave.push({ code, units, grade });
-                    }
-                });
-                saveCourses(coursesToSave).then(() => alert("Courses saved!"));
-            });
-        }
+    if (addNoteForm) {
+        addNoteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = e.target.title.value;
+            const content = e.target.content.value;
+            if (await addNote(title, content)) {
+                e.target.reset();
+                await renderNotes();
+            } else {
+                alert('Failed to add note.');
+            }
+        });
     }
+
+    await renderNotes();
+} else if (path.startsWith('/profile')) {
+    console.log("Profile page loaded. DB features are disabled during migration.");
+} else if (path === '/community') {
+    console.log("Community page loaded. DB features are disabled during migration.");
+} else if (path === '/pings') {
+    console.log("Pings page loaded. DB features are disabled during migration.");
+}
 };
 
-// ... (rest of the file is the same)
-// I will just overwrite the whole file to be safe.
-window.onpopstate = () => { loadPage(window.location.pathname); };
-initAuthStateObserver(navigate, renderHeader);
-const hamburger = document.getElementById('hamburger-menu');
-const header = document.getElementById('main-header');
-hamburger.addEventListener('click', () => { header.classList.toggle('nav-open'); });
-
-function calculateCGPA() {
-    const rows = document.querySelectorAll('#cgpa-table-body tr');
-    let totalGradePoints = 0, totalUnits = 0;
-    rows.forEach(row => {
-        const unitsInput = row.querySelector('input[type="number"]');
-        const gradeSelect = row.querySelector('select');
-        if (unitsInput && gradeSelect) {
-            const units = parseFloat(unitsInput.value) || 0;
-            const grade = parseFloat(gradeSelect.value) || 0;
-            if (units > 0) {
-                totalGradePoints += units * grade;
-                totalUnits += units;
-            }
-        }
-    });
-    const semesterGPA = totalUnits > 0 ? (totalGradePoints / totalUnits).toFixed(2) : '0.00';
-    const resultDiv = document.getElementById('gpa-result');
-    resultDiv.innerHTML = `<h3>Your Results</h3><div class="gauge"></div><p>Semester GPA: <strong>${semesterGPA}</strong></p><p>Overall CGPA: <strong>${semesterGPA}</strong> (demo)</p>`;
-}
+document.addEventListener('DOMContentLoaded', () => { initAuthStateObserver(navigate, renderHeader); window.onpopstate = () => { loadPage(window.location.pathname); }; });
